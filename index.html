@@ -78,10 +78,77 @@ canvas { border-radius:50%; background: radial-gradient(circle, #0f0f0f, #000); 
 .factor-panel input[type="range"] { width:100%; }
 </style>
 
-<!-- jsPDF CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+const { jsPDF } = window.jspdf;
 
+// JSON Export
+document.getElementById("downloadJSON").onclick = function () {
+    let data = {
+        timestamp: new Date().toISOString(),
+        vata: Math.round(vata),
+        pitta: Math.round(pitta),
+        kapha: Math.round(kapha),
+        factors: {
+            sleep: getFactor("sleep"),
+            hydration: getFactor("hydration"),
+            stress: getFactor("stress"),
+            agni: getFactor("agni"),
+            temperature: getFactor("temp"),
+            food: getFactor("food"),
+            routine: getFactor("routine"),
+            season: getFactor("season"),
+            ama: getFactor("ama"),
+            activity: getFactor("activity")
+        }
+    };
+    const file = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(file);
+    link.download = "dosha_snapshot.json";
+    link.click();
+};
+
+// PDF Export
+document.getElementById("downloadPDF").onclick = function () {
+    const doc = new jsPDF();
+
+    doc.setFontSize(14);
+    doc.setTextColor(255, 215, 0); // gold header
+    doc.text("🧘 Dosha Oscillation Report", 10, 15);
+
+    doc.setFontSize(12);
+    doc.setTextColor(255, 255, 255);
+
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 10, 25);
+    doc.text(`Vata: ${Math.round(vata)}`, 10, 35);
+    doc.text(`Pitta: ${Math.round(pitta)}`, 10, 45);
+    doc.text(`Kapha: ${Math.round(kapha)}`, 10, 55);
+
+    doc.text("-----------------------------", 10, 65);
+    doc.text("Input Factors:", 10, 75);
+
+    const factors = ["sleep","hydration","stress","agni","temp","food","routine","season","ama","activity"];
+    let y = 85;
+    factors.forEach(f => {
+        doc.text(`${f.charAt(0).toUpperCase()+f.slice(1)}: ${getFactor(f)}`, 10, y);
+        y += 8;
+    });
+
+    doc.save("Dosha_Report.pdf");
+};
+
+// PNG Screenshot Export
+document.getElementById("downloadPNG").onclick = function() {
+    html2canvas(document.body).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "dosha_screenshot.png";
+        link.href = canvas.toDataURL();
+        link.click();
+    });
+};
+</script>
+    
 </head>
 <body>
 
@@ -193,32 +260,53 @@ function drawRings() {
 // -----------------------------
 // STEP B12 — Audio Engine
 // -----------------------------
-let audioEnabled = false, audioCtx=null, droneOsc=null, vataOsc=null;
-document.getElementById("soundToggle").onclick = function(){
-    if(!audioCtx){
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+<script>
+let audioEnabled = false;
+let audioCtx = null;
 
-        // Deep drone
-        droneOsc = audioCtx.createOscillator();
-        droneOsc.type="sine"; droneOsc.frequency.value=80; droneOsc.start();
-        let droneGain = audioCtx.createGain(); droneGain.gain.value=0;
-        droneOsc.connect(droneGain); droneGain.connect(audioCtx.destination);
+function initAudio() {
+    if (audioCtx) return;
 
-        // Vata oscillator
-        vataOsc = audioCtx.createOscillator();
-        vataOsc.type="sine"; vataOsc.frequency.value=200; vataOsc.start();
-        let vataGain = audioCtx.createGain(); vataGain.gain.value=0;
-        vataOsc.connect(vataGain); vataGain.connect(audioCtx.destination);
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        window.doshaAudio = { droneOsc, droneGain, vataOsc, vataGain };
-    }
+    // Deep Prana Hum
+    const droneOsc = audioCtx.createOscillator();
+    droneOsc.type = "sine";
+    droneOsc.frequency.value = 80;
+    const droneGain = audioCtx.createGain();
+    droneGain.gain.value = 0.0;
+    droneOsc.connect(droneGain).connect(audioCtx.destination);
+    droneOsc.start();
 
+    // Light Vata Pulse
+    const vataOsc = audioCtx.createOscillator();
+    vataOsc.type = "sine";
+    vataOsc.frequency.value = 200;
+    const vataGain = audioCtx.createGain();
+    vataGain.gain.value = 0.0;
+    vataOsc.connect(vataGain).connect(audioCtx.destination);
+    vataOsc.start();
+
+    window.doshaAudio = { droneOsc, droneGain, vataOsc, vataGain };
+}
+
+// Toggle button
+document.getElementById("soundToggle").onclick = function () {
+    if (!audioCtx) initAudio();
     audioEnabled = !audioEnabled;
+
     this.innerText = audioEnabled ? "🔊 Sound: ON" : "🔈 Sound: OFF";
-    window.doshaAudio.droneGain.gain.value = audioEnabled?0.25:0;
-    window.doshaAudio.vataGain.gain.value = audioEnabled?0.12:0;
+
+    if (audioEnabled) {
+        window.doshaAudio.droneGain.gain.setTargetAtTime(0.25, audioCtx.currentTime, 0.1);
+        window.doshaAudio.vataGain.gain.setTargetAtTime(0.12, audioCtx.currentTime, 0.1);
+    } else {
+        window.doshaAudio.droneGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+        window.doshaAudio.vataGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+    }
 };
 
+    
 // -----------------------------
 // STEP B9 — Animate doshas
 // -----------------------------
