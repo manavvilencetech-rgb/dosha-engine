@@ -276,7 +276,8 @@ const link=document.createElement("a"); link.href=URL.createObjectURL(blob); lin
 
 document.getElementById("downloadPDF").onclick=function(){
 const { jsPDF } = window.jspdf; const doc=new jsPDF();
-doc.setFontSize(14); doc.setTextColor(255,215,0); doc.text("🧘 Dosha Oscillation Report",10,15);
+doc.setFont("helvetica", "normal");  
+doc.setFontSize(14); doc.setTextColor(255,215,0); doc.text("Dosha Oscillation Report",10,15);
 doc.setFontSize(12); doc.setTextColor(255,255,255);
 doc.text(`Generated: ${new Date().toLocaleString()}`,10,25);
 doc.text(`Vata: ${Math.round(vata)}`,10,35);
