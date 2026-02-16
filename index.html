@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<title>Dosha Oscillation Engine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+    body {
+        background: #0d0d0d;
+        color: #e4e4e4;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 0;
+        padding: 20px;
+    }
+
+    h1 {
+        font-weight: 300;
+        letter-spacing: 2px;
+    }
+
+    #doshaCanvas {
+        margin-top: 20px;
+        background: transparent;
+    }
+
+    .dosha-values {
+        margin-top: 15px;
+        font-size: 18px;
+        color: #b6f0ff;
+    }
+
+    .inputs {
+        margin-top: 40px;
+        max-width: 380px;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: left;
+        font-size: 15px;
+    }
+
+    .inputs label {
+        display: block;
+        margin-top: 12px;
+        margin-bottom: 6px;
+        opacity: 0.9;
+    }
+
+    input[type="range"] {
+        width: 100%;
+    }
+
+    button {
+        background: #262626;
+        color: #e4e4e4;
+        padding: 10px 18px;
+        border: none;
+        margin: 8px;
+        cursor: pointer;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+    button:hover {
+        background: #333333;
+    }
+</style>
+</head>
+
+<body>
+
+<h1>DOSHA OSCILLATION ENGINE</h1>
+
+<canvas id="doshaCanvas" width="380" height="380"></canvas>
+
+<div class="dosha-values">
+    <p class="vata-value">Vata: --</p>
+    <p class="pitta-value">Pitta: --</p>
+    <p class="kapha-value">Kapha: --</p>
+</div>
+
+<!-- INPUT PANEL -->
+<div class="inputs">
+    <label>Sleep</label><input id="sleep" type="range" min="0" max="100" value="50">
+
+    <label>Hydration</label><input id="hydration" type="range" min="0" max="100" value="50">
+
+    <label>Stress</label><input id="stress" type="range" min="0" max="100" value="50">
+
+    <label>Agni</label><input id="agni" type="range" min="0" max="100" value="50">
+
+    <label>Temperature Sensitivity</label><input id="temp" type="range" min="0" max="100" value="50">
+
+    <label>Food Quality</label><input id="food" type="range" min="0" max="100" value="50">
+
+    <label>Routine Stability</label><input id="routine" type="range" min="0" max="100" value="50">
+
+    <label>Season Impact</label><input id="season" type="range" min="0" max="100" value="50">
+
+    <label>Ama Level</label><input id="ama" type="range" min="0" max="100" value="50">
+
+    <label>Activity Level</label><input id="activity" type="range" min="0" max="100" value="50">
+</div>
+
+<div style="margin-top:30px">
+    <button id="downloadPDF">📄 PDF</button>
+    <button id="downloadJSON">🧾 JSON</button>
+    <button id="downloadPNG">📸 PNG</button>
+    <button id="toggleAudio">🎧 Audio OFF</button>
+</div>
+
+<script>
+/* ---------------------------------------------
+   CORE VARIABLES
+--------------------------------------------- */
+const canvas = document.getElementById("doshaCanvas");
+const ctx = canvas.getContext("2d");
+
+let vata = 40, pitta = 35, kapha = 25;
+let t = 0;
+
+let flowSeed1 = Math.random() * 2000;
+let flowSeed2 = Math.random() * 3000;
+let flowSeed3 = Math.random() * 4000;
+
+let audioEnabled = false;
+
+/* ---------------------------------------------
+   CHAOS + OSCILLATION ENGINES
+--------------------------------------------- */
+function chaos(v) {
+    v += (Math.random() - 0.5) * 3;
+    return Math.max(0, Math.min(100, v));
+}
+
+function oscillate(v, f = 10, a = 1.5) {
+    return v + Math.sin((t / 50) * f) * a;
+}
+
+function flowfield(v, seed) {
+    return v + Math.sin(seed + t * 0.02) * 2 + Math.cos(seed + t * 0.015) * 1.2;
+}
+
+function couple() {
+    pitta += (vata - 50) * 0.005;
+    kapha -= (pitta - 50) * 0.004;
+    vata -= (kapha - 50) * 0.006;
+}
+
+/* ---------------------------------------------
+   AYURVEDIC FACTOR LOGIC
+--------------------------------------------- */
+function applyFactors() {
+    let sleep = +sleepEl.value;
+    let hydration = +hydrationEl.value;
+    let stress = +stressEl.value;
+    let agni = +agniEl.value;
+    let temp = +tempEl.value;
+    let food = +foodEl.value;
+    let routine = +routineEl.value;
+    let season = +seasonEl.value;
+    let ama = +amaEl.value;
+    let activity = +activityEl.value;
+
+    vata += (100 - sleep) * 0.02 + (100 - hydration) * 0.015 + stress * 0.03 + (100 - routine) * 0.02 + (season > 70 ? 0.5 : 0);
+    pitta += temp * 0.02 + food * 0.015 + stress * 0.01 + ama * 0.01 + agni * 0.02;
+    kapha += (100 - activity) * 0.02 + food * 0.01 + hydration * 0.02 + (temp < 40 ? 0.03 : 0) + ama * 0.02;
+
+    vata = clamp(vata);
+    pitta = clamp(pitta);
+    kapha = clamp(kapha);
+}
+
+function clamp(v) {
+    return Math.max(0, Math.min(100, v));
+}
+
+/* ---------------------------------------------
+   DRAW ENGINE
+--------------------------------------------- */
+function drawRings() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    drawRing(cx, cy, 120 + vata * 0.4, "rgba(173,216,230,0.8)");
+    drawRing(cx, cy, 120 + pitta * 0.4, "rgba(255,140,0,0.8)");
+    drawRing(cx, cy, 120 + kapha * 0.4, "rgba(144,238,144,0.8)");
+
+    updateNumbers();
+}
+
+function drawRing(x, y, r, color) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+}
+
+function updateNumbers() {
+    document.querySelector(".vata-value").innerText = "Vata: " + vata.toFixed(1);
+    document.querySelector(".pitta-value").innerText = "Pitta: " + pitta.toFixed(1);
+    document.querySelector(".kapha-value").innerText = "Kapha: " + kapha.toFixed(1);
+}
+
+/* ---------------------------------------------
+   AUDIO ENGINE
+--------------------------------------------- */
+let audioCtx, droneOsc, vataOsc;
+
+function initAudio() {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    droneOsc = audioCtx.createOscillator();
+    droneOsc.type = "sine";
+    droneOsc.frequency.value = 80;
+    droneOsc.connect(audioCtx.destination);
+    droneOsc.start();
+
+    vataOsc = audioCtx.createOscillator();
+    vataOsc.type = "triangle";
+    vataOsc.frequency.value = 150;
+    vataOsc.connect(audioCtx.destination);
+    vataOsc.start();
+}
+
+document.getElementById("toggleAudio").onclick = () => {
+    audioEnabled = !audioEnabled;
+
+    if (audioEnabled && !audioCtx) initAudio();
+
+    document.getElementById("toggleAudio").innerText =
+        audioEnabled ? "🎧 Audio ON" : "🎧 Audio OFF";
+};
+
+/* ---------------------------------------------
+   MAIN ANIMATION LOOP
+--------------------------------------------- */
+function animate() {
+    applyFactors();
+    couple();
+
+    vata = oscillate(vata);
+    pitta = oscillate(pitta, 9);
+    kapha = oscillate(kapha, 7);
+
+    vata = flowfield(vata, flowSeed1);
+    pitta = flowfield(pitta, flowSeed2);
+    kapha = flowfield(kapha, flowSeed3);
+
+    vata = chaos(vata);
+    pitta = chaos(pitta);
+    kapha = chaos(kapha);
+
+    drawRings();
+
+    if (audioEnabled && audioCtx) {
+        droneOsc.frequency.value = 60 + kapha * 0.4;
+        vataOsc.frequency.value = 140 + vata * 0.8;
+    }
+
+    t++;
+    requestAnimationFrame(animate);
+}
+
+/* ---------------------------------------------
+   EXPORT FUNCTIONS
+--------------------------------------------- */
+document.getElementById("downloadJSON").onclick = () => {
+    let data = { vata, pitta, kapha, time: Date.now() };
+    let blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "dosha-report.json";
+    a.click();
+};
+
+document.getElementById("downloadPNG").onclick = () => {
+    let link = document.createElement("a");
+    link.download = "dosha.png";
+    link.href = canvas.toDataURL();
+    link.click();
+};
+
+document.getElementById("downloadPDF").onclick = () => {
+    alert("PDF export not supported in pure JS on GitHub pages — use PNG instead.");
+};
+
+/* ---------------------------------------------
+   INPUT ELEMENTS
+--------------------------------------------- */
+const sleepEl = document.getElementById("sleep");
+const hydrationEl = document.getElementById("hydration");
+const stressEl = document.getElementById("stress");
+const agniEl = document.getElementById("agni");
+const tempEl = document.getElementById("temp");
+const foodEl = document.getElementById("food");
+const routineEl = document.getElementById("routine");
+const seasonEl = document.getElementById("season");
+const amaEl = document.getElementById("ama");
+const activityEl = document.getElementById("activity");
+
+/* ---------------------------------------------
+   START
+--------------------------------------------- */
+animate();
+
+</script>
+</body>
+      </html>
+      
