@@ -218,71 +218,15 @@ document.getElementById("downloadPDF").onclick=function(){
 document.getElementById("downloadPNG").onclick=function(){
   html2canvas(document.body).then(canvas=>{ const link=document.createElement("a"); link.download="dosha_screenshot.png"; link.href=canvas.toDataURL(); link.click(); });
 };
-// -----------------------------
-// AUDIO (Dynamic Dosha Sound)
-// -----------------------------
-let audioCtx = null;
-let audioEnabled = false;
 
-function initAudio() {
-    if (audioCtx) return;
-
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    audioCtx.resume(); // required for user gesture
-
-    // Vata oscillator (high pitch)
-    const vataOsc = audioCtx.createOscillator();
-    vataOsc.type = "sine";
-    vataOsc.frequency.value = 200;
-
-    const vataGain = audioCtx.createGain();
-    vataGain.gain.value = 0;
-
-    vataOsc.connect(vataGain).connect(audioCtx.destination);
-    vataOsc.start();
-
-    // Drone for Pitta/Kapha
-    const droneOsc = audioCtx.createOscillator();
-    droneOsc.type = "sine";
-    droneOsc.frequency.value = 80;
-
-    const droneGain = audioCtx.createGain();
-    droneGain.gain.value = 0;
-
-    droneOsc.connect(droneGain).connect(audioCtx.destination);
-    droneOsc.start();
-
-    window.doshaAudio = { droneOsc, droneGain, vataOsc, vataGain };
-}
-
-// Audio toggle (simple working)
-let audioEnabled = false;
-let audioCtx = null;
-let oscillator = null;
-
-document.getElementById("soundToggle").onclick = function() {
-    if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    audioEnabled = !audioEnabled;
-    this.innerText = audioEnabled ? "🔊 Sound: ON" : "🔈 Sound: OFF";
-
-    if (audioEnabled) {
-        oscillator = audioCtx.createOscillator();
-        oscillator.type = "sine";
-        oscillator.frequency.value = 200; // simple constant tone
-        oscillator.connect(audioCtx.destination);
-        oscillator.start();
-    } else {
-        if (oscillator) {
-            oscillator.stop();
-            oscillator.disconnect();
-            oscillator = null;
-        }
-    }
+// Audio toggle
+let audioEnabled=false, audioCtx=null;
+document.getElementById("soundToggle").onclick=function(){
+  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  audioEnabled=!audioEnabled; this.innerText=audioEnabled?"🔊 Sound: ON":"🔈 Sound: OFF";
 };
 </script>
 
 </body>
-</html>
+    </html>
 
