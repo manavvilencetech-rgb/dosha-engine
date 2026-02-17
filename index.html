@@ -219,31 +219,7 @@ document.getElementById("downloadPNG").onclick=function(){
   html2canvas(document.body).then(canvas=>{ const link=document.createElement("a"); link.download="dosha_screenshot.png"; link.href=canvas.toDataURL(); link.click(); });
 };
 </script>
-<style>
-/* GOLD BUTTON */
-.gold-btn {
-    background: #111;                
-    color: #d4af37;                  
-    border: 2px solid #d4af37;
-    padding: 12px 22px;
-    font-size: 18px;
-    font-weight: 700;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.3s ease;
-    box-shadow: 0 0 8px rgba(212,175,55,0.4);
-}
-.gold-btn:hover {
-    background: #d4af37;
-    color: #111;
-    box-shadow: 0 0 15px rgba(212,175,55,0.8);
-}
-</style>
-</head>
 
-<body style="background:#000; padding:40px;">
-
-<button id="soundToggle" class="gold-btn">🔈 Sound: OFF</button>
 
 <script>
 let audioCtx=null, audioEnabled=false;
