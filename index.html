@@ -226,7 +226,82 @@ document.getElementById("soundToggle").onclick=function(){
   audioEnabled=!audioEnabled; this.innerText=audioEnabled?"🔊 Sound: ON":"🔈 Sound: OFF";
 };
 </script>
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+/* GOLD BUTTON */
+.gold-btn {
+    background: #111;                
+    color: #d4af37;                  
+    border: 2px solid #d4af37;
+    padding: 12px 22px;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s ease;
+    box-shadow: 0 0 8px rgba(212,175,55,0.4);
+}
+.gold-btn:hover {
+    background: #d4af37;
+    color: #111;
+    box-shadow: 0 0 15px rgba(212,175,55,0.8);
+}
+</style>
+</head>
 
+<body style="background:#000; padding:40px;">
+
+<button id="soundToggle" class="gold-btn">🔈 Sound: OFF</button>
+
+<script>
+let audioCtx=null, audioEnabled=false;
+
+function initAudio(){
+if(audioCtx) return;
+audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+
+const droneOsc=audioCtx.createOscillator();
+droneOsc.type="sine";
+droneOsc.frequency.value=80;
+
+const droneGain=audioCtx.createGain();
+droneGain.gain.value=0;
+droneOsc.connect(droneGain).connect(audioCtx.destination);
+droneOsc.start();
+
+const vataOsc=audioCtx.createOscillator();
+vataOsc.type="sine";
+vataOsc.frequency.value=200;
+
+const vataGain=audioCtx.createGain();
+vataGain.gain.value=0;
+vataOsc.connect(vataGain).connect(audioCtx.destination);
+vataOsc.start();
+
+window.doshaAudio={droneOsc,droneGain,vataOsc,vataGain};
+}
+
+document.getElementById("soundToggle").onclick=function(){
+if(!audioCtx) initAudio();
+audioEnabled=!audioEnabled;
+this.innerText=audioEnabled?"🔊 Sound: ON":"🔈 Sound: OFF";
+
+if(audioEnabled){
+    // INCREASED VOLUME HERE
+    window.doshaAudio.droneGain.gain.setTargetAtTime(0.60,audioCtx.currentTime,0.1);
+    window.doshaAudio.vataGain.gain.setTargetAtTime(0.40,audioCtx.currentTime,0.1);
+}else{
+    window.doshaAudio.droneGain.gain.setTargetAtTime(0,audioCtx.currentTime,0.1);
+    window.doshaAudio.vataGain.gain.setTargetAtTime(0,audioCtx.currentTime,0.1);
+}
+};
+</script>
+
+</body>
+</html>
+    
 </body>
     </html>
 
