@@ -218,17 +218,7 @@ document.getElementById("downloadPDF").onclick=function(){
 document.getElementById("downloadPNG").onclick=function(){
   html2canvas(document.body).then(canvas=>{ const link=document.createElement("a"); link.download="dosha_screenshot.png"; link.href=canvas.toDataURL(); link.click(); });
 };
-
-// Audio toggle
-let audioEnabled=false, audioCtx=null;
-document.getElementById("soundToggle").onclick=function(){
-  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-  audioEnabled=!audioEnabled; this.innerText=audioEnabled?"🔊 Sound: ON":"🔈 Sound: OFF";
-};
 </script>
-<!DOCTYPE html>
-<html>
-<head>
 <style>
 /* GOLD BUTTON */
 .gold-btn {
@@ -298,9 +288,6 @@ if(audioEnabled){
 }
 };
 </script>
-
-</body>
-</html>
     
 </body>
     </html>
