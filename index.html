@@ -220,31 +220,84 @@ document.getElementById("downloadPNG").onclick=function(){
 // -----------------------------
 // AUDIO
 // -----------------------------
-function initAudio(){
-if(audioCtx) return;
-audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-const droneOsc=audioCtx.createOscillator(); droneOsc.type="sine"; droneOsc.frequency.value=80;
-const droneGain=audioCtx.createGain(); droneGain.gain.value=0;
-droneOsc.connect(droneGain).connect(audioCtx.destination); droneOsc.start();
-const vataOsc=audioCtx.createOscillator(); vataOsc.type="sine"; vataOsc.frequency.value=200;
-const vataGain=audioCtx.createGain(); vataGain.gain.value=0;
-vataOsc.connect(vataGain).connect(audioCtx.destination); vataOsc.start();
-window.doshaAudio={droneOsc,droneGain,vataOsc,vataGain};
+<script>
+let audioCtx = null;
+let audioEnabled = false;
+
+function initAudio() {
+    if (audioCtx) return;
+
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    audioCtx.resume(); // Ensure audio starts after user gesture
+
+    // Vata oscillator (high frequency, fluttering)
+    const vataOsc = audioCtx.createOscillator();
+    vataOsc.type = "sine";
+    vataOsc.frequency.value = 200;
+
+    const vataGain = audioCtx.createGain();
+    vataGain.gain.value = 0;
+
+    vataOsc.connect(vataGain).connect(audioCtx.destination);
+    vataOsc.start();
+
+    // Pitta/Kapha drone (lower frequency, sustaining)
+    const droneOsc = audioCtx.createOscillator();
+    droneOsc.type = "sine";
+    droneOsc.frequency.value = 80;
+
+    const droneGain = audioCtx.createGain();
+    droneGain.gain.value = 0;
+
+    droneOsc.connect(droneGain).connect(audioCtx.destination);
+    droneOsc.start();
+
+    window.doshaAudio = { droneOsc, droneGain, vataOsc, vataGain };
 }
 
-document.getElementById("soundToggle").onclick=function(){
-if(!audioCtx) initAudio();
-audioEnabled=!audioEnabled;
-this.innerText=audioEnabled?"🔊 Sound: ON":"🔈 Sound: OFF";
-if(audioEnabled){
-window.doshaAudio.droneGain.gain.setTargetAtTime(0.25,audioCtx.currentTime,0.1);
-window.doshaAudio.vataGain.gain.setTargetAtTime(0.12,audioCtx.currentTime,0.1);
-}else{
-window.doshaAudio.droneGain.gain.setTargetAtTime(0,audioCtx.currentTime,0.1);
-window.doshaAudio.vataGain.gain.setTargetAtTime(0,audioCtx.currentTime,0.1);
+// Toggle audio on/off
+document.getElementById("soundToggle").onclick = function () {
+    if (!audioCtx) initAudio();
+    audioEnabled = !audioEnabled;
+    this.innerText = audioEnabled ? "🔊 Sound: ON" : "🔈 Sound: OFF";
+    
+    if (audioEnabled) {
+        window.doshaAudio.droneGain.gain.setTargetAtTime(0.25, audioCtx.currentTime, 0.1);
+        window.doshaAudio.vataGain.gain.setTargetAtTime(0.12, audioCtx.currentTime, 0.1);
+    } else {
+        window.doshaAudio.droneGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+        window.doshaAudio.vataGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+    }
+};
+
+// Update oscillator parameters dynamically based on dosha values
+function updateDoshaAudio() {
+    if (!audioEnabled || !window.doshaAudio) return;
+
+    const { droneOsc, droneGain, vataOsc, vataGain } = window.doshaAudio;
+
+    // Vata: 150–400 Hz
+    vataOsc.frequency.setTargetAtTime(150 + (vata / 100) * 250, audioCtx.currentTime, 0.1);
+    vataGain.gain.setTargetAtTime(0.05 + (vata / 100) * 0.15, audioCtx.currentTime, 0.1);
+
+    // Pitta: 60–160 Hz
+    droneOsc.frequency.setTargetAtTime(60 + (pitta / 100) * 100, audioCtx.currentTime, 0.1);
+
+    // Kapha: 0–0.25 gain
+    droneGain.gain.setTargetAtTime(0.05 + (kapha / 100) * 0.2, audioCtx.currentTime, 0.1);
 }
-};  
+
+// Connect the dynamic update to the animation loop
+function animateDosha() { 
+    t += 0.02; 
+    computeDoshas(); 
+    drawRings(); 
+    updateDoshaAudio(); 
+    requestAnimationFrame(animateDosha); 
+}
+animateDosha();
 </script>
+    
 
 </body>
     </html>
